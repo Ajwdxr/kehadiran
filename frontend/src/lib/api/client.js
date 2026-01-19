@@ -1,7 +1,7 @@
 // API client for backend communication
-// In production, PUBLIC_API_URL points to Render backend
+// In production, VITE_API_URL points to Render backend
 // In dev, we use Vite proxy to /api
-const API_BASE = import.meta.env.PUBLIC_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 class ApiClient {
     constructor() {
