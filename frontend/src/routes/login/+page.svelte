@@ -79,12 +79,6 @@
           {/if}
         </button>
       </form>
-
-      <!-- Demo Credentials -->
-      <div class="demo-info">
-        <p class="demo-title">Demo Credentials:</p>
-        <p class="demo-creds">admin@kehadiran.com / admin123</p>
-      </div>
     </div>
   </div>
 </div>
