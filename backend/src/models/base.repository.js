@@ -1,5 +1,13 @@
 import db, { DB_TYPE } from '../config/database.js';
 
+// Helper to ensure db is initialized
+function ensureDb() {
+    if (!db) {
+        throw new Error('Database not initialized. Please check environment variables (SUPABASE_URL, SUPABASE_SERVICE_KEY)');
+    }
+    return db;
+}
+
 // Repository pattern - abstract database operations
 export class BaseRepository {
     constructor(tableName) {

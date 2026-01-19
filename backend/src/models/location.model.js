@@ -8,6 +8,12 @@ class LocationRepository extends BaseRepository {
 
     // Get all active locations
     async findAllActive() {
+        // If db is not initialized, return empty array (skip geofencing)
+        if (!db) {
+            console.warn('⚠️ Database not initialized, skipping location check');
+            return [];
+        }
+
         if (DB_TYPE === 'mysql') {
             const [rows] = await db.query(
                 `SELECT * FROM ${this.tableName} WHERE is_active = TRUE ORDER BY name`
