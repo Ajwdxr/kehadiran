@@ -3,33 +3,33 @@ import 'dotenv/config';
 import mysql from 'mysql2/promise';
 
 const config = {
-    host: process.env.MYSQL_HOST || 'localhost',
-    port: process.env.MYSQL_PORT || 3306,
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || ''
+  host: process.env.MYSQL_HOST || 'localhost',
+  port: process.env.MYSQL_PORT || 3306,
+  user: process.env.MYSQL_USER || 'root',
+  password: process.env.MYSQL_PASSWORD || ''
 };
 
 const dbName = process.env.MYSQL_DATABASE || 'kehadiran';
 
 async function migrate() {
-    let connection;
+  let connection;
 
-    try {
-        // Connect without database first
-        connection = await mysql.createConnection(config);
+  try {
+    // Connect without database first
+    connection = await mysql.createConnection(config);
 
-        console.log('🔄 Starting migration...\n');
+    console.log('🔄 Starting migration...\n');
 
-        // Create database
-        console.log('📦 Creating database...');
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-        await connection.query(`USE \`${dbName}\``);
-        console.log(`   ✅ Database '${dbName}' ready\n`);
+    // Create database
+    console.log('📦 Creating database...');
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+    await connection.query(`USE \`${dbName}\``);
+    console.log(`   ✅ Database '${dbName}' ready\n`);
 
-        // Create roles table
-        console.log('📋 Creating tables...');
+    // Create roles table
+    console.log('📋 Creating tables...');
 
-        await connection.query(`
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS roles (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(50) NOT NULL UNIQUE,
@@ -37,10 +37,10 @@ async function migrate() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-        console.log('   ✅ roles');
+    console.log('   ✅ roles');
 
-        // Create users table
-        await connection.query(`
+    // Create users table
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(100) NOT NULL,
@@ -53,10 +53,10 @@ async function migrate() {
         FOREIGN KEY (role_id) REFERENCES roles(id)
       )
     `);
-        console.log('   ✅ users');
+    console.log('   ✅ users');
 
-        // Create attendance table
-        await connection.query(`
+    // Create attendance table
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS attendance (
         id INT PRIMARY KEY AUTO_INCREMENT,
         user_id INT NOT NULL,
@@ -73,10 +73,10 @@ async function migrate() {
         UNIQUE KEY unique_user_date (user_id, date)
       )
     `);
-        console.log('   ✅ attendance');
+    console.log('   ✅ attendance');
 
-        // Create user_sessions table (for future use)
-        await connection.query(`
+    // Create user_sessions table (for future use)
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS user_sessions (
         id INT PRIMARY KEY AUTO_INCREMENT,
         user_id INT NOT NULL,
@@ -88,10 +88,10 @@ async function migrate() {
         FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `);
-        console.log('   ✅ user_sessions');
+    console.log('   ✅ user_sessions');
 
-        // Create shifts table (for future use)
-        await connection.query(`
+    // Create shifts table (for future use)
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS shifts (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(100) NOT NULL,
@@ -102,32 +102,33 @@ async function migrate() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-        console.log('   ✅ shifts');
+    console.log('   ✅ shifts');
 
-        // Create locations table (for future use)
-        await connection.query(`
+    // Create locations table (for future use)
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS locations (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(100) NOT NULL,
+        address VARCHAR(255),
         latitude DECIMAL(10, 8) NOT NULL,
         longitude DECIMAL(11, 8) NOT NULL,
-        radius_meters INT DEFAULT 100,
+        radius INT DEFAULT 100,
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-        console.log('   ✅ locations');
+    console.log('   ✅ locations');
 
-        console.log('\n🎉 Migration completed successfully!');
+    console.log('\n🎉 Migration completed successfully!');
 
-    } catch (error) {
-        console.error('❌ Migration failed:', error.message);
-        process.exit(1);
-    } finally {
-        if (connection) {
-            await connection.end();
-        }
+  } catch (error) {
+    console.error('❌ Migration failed:', error.message);
+    process.exit(1);
+  } finally {
+    if (connection) {
+      await connection.end();
     }
+  }
 }
 
 migrate();
