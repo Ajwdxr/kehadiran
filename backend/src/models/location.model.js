@@ -1,4 +1,5 @@
 import BaseRepository from './base.repository.js';
+import db, { DB_TYPE } from '../config/database.js';
 
 class LocationRepository extends BaseRepository {
     constructor() {
@@ -7,37 +8,37 @@ class LocationRepository extends BaseRepository {
 
     // Get all active locations
     async findAllActive() {
-        if (this.dbType === 'mysql') {
-            const [rows] = await this.db.query(
+        if (DB_TYPE === 'mysql') {
+            const [rows] = await db.query(
                 `SELECT * FROM ${this.tableName} WHERE is_active = TRUE ORDER BY name`
             );
             return rows;
         } else {
-            const { data, error } = await this.db
+            const { data, error } = await db
                 .from(this.tableName)
                 .select('*')
                 .eq('is_active', true)
                 .order('name');
             if (error) throw error;
-            return data;
+            return data || [];
         }
     }
 
     // Get location by ID
     async findById(id) {
-        if (this.dbType === 'mysql') {
-            const [rows] = await this.db.query(
+        if (DB_TYPE === 'mysql') {
+            const [rows] = await db.query(
                 `SELECT * FROM ${this.tableName} WHERE id = ?`,
                 [id]
             );
             return rows[0] || null;
         } else {
-            const { data, error } = await this.db
+            const { data, error } = await db
                 .from(this.tableName)
                 .select('*')
                 .eq('id', id)
                 .single();
-            if (error) throw error;
+            if (error && error.code !== 'PGRST116') throw error;
             return data;
         }
     }
@@ -45,3 +46,4 @@ class LocationRepository extends BaseRepository {
 
 export const locationRepository = new LocationRepository();
 export default locationRepository;
+
