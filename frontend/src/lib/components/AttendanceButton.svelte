@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { attendance, hasCheckedIn, hasCheckedOut } from '$lib/stores/attendance.js';
   import api from '$lib/api/client.js';
+  import Modal from './Modal.svelte';
   
   let loading = false;
   let message = '';
@@ -294,36 +295,28 @@
 </div>
 
 <!-- Note Modal -->
-{#if showNoteModal}
-  <div class="modal-overlay" on:click={cancelNote}>
-    <div class="modal" on:click|stopPropagation>
-      <div class="modal-header">
-        <h3>📝 Catatan Diperlukan</h3>
-      </div>
-      <div class="modal-body">
-        <p class="note-reason">{noteReason}</p>
-        <label for="note" class="label">Sila masukkan sebab:</label>
-        <textarea 
-          id="note"
-          class="input textarea"
-          placeholder="Contoh: Trafik sesak, Urusan kecemasan..."
-          bind:value={noteText}
-          rows="3"
-        ></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-outline" on:click={cancelNote}>Batal</button>
-        <button 
-          class="btn btn-primary" 
-          on:click={submitNote}
-          disabled={!noteText.trim() || loading}
-        >
-          {loading ? 'Menghantar...' : 'Hantar'}
-        </button>
-      </div>
-    </div>
+<Modal show={showNoteModal} title="📝 Catatan Diperlukan" on:close={cancelNote}>
+  <p class="note-reason">{noteReason}</p>
+  <label for="note" class="label">Sila masukkan sebab:</label>
+  <textarea 
+    id="note"
+    class="input textarea"
+    placeholder="Contoh: Trafik sesak, Urusan kecemasan..."
+    bind:value={noteText}
+    rows="3"
+  ></textarea>
+  
+  <div slot="footer" class="modal-actions">
+    <button class="btn btn-outline" on:click={cancelNote}>Batal</button>
+    <button 
+      class="btn btn-primary" 
+      on:click={submitNote}
+      disabled={!noteText.trim() || loading}
+    >
+      {loading ? 'Menghantar...' : 'Hantar'}
+    </button>
   </div>
-{/if}
+</Modal>
 
 <style>
   .attendance-button-container {
@@ -473,64 +466,6 @@
     animation: spin 0.8s linear infinite;
   }
 
-  /* Modal */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: var(--space-md);
-    overflow: hidden;
-  }
-
-  .modal {
-    position: relative;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
-    width: 100%;
-    max-width: 400px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: slideUp 0.3s ease;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    z-index: 10000;
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .modal-header {
-    padding: var(--space-lg);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .modal-header h3 {
-    margin: 0;
-    font-size: 1.125rem;
-  }
-
-  .modal-body {
-    padding: var(--space-lg);
-  }
-
   .note-reason {
     background: rgba(245, 158, 11, 0.2);
     color: var(--color-warning);
@@ -543,14 +478,13 @@
   .textarea {
     resize: vertical;
     min-height: 80px;
+    width: 100%;
   }
 
   .modal-actions {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    border-top: 1px solid var(--color-border);
   }
 
   @keyframes spin {
