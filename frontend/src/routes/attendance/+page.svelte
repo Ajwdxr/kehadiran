@@ -1,17 +1,23 @@
 <script>
-  import { onMount } from 'svelte';
-  import attendance from '$lib/stores/attendance.js';
-  import AttendanceButton from '$lib/components/AttendanceButton.svelte';
+  import { onMount } from "svelte";
+  import attendance from "$lib/stores/attendance.js";
+  import auth from "$lib/stores/auth.js";
+  import AttendanceButton from "$lib/components/AttendanceButton.svelte";
 
-  let currentTime = '';
+  let currentTime = "";
+
+  // Wait for auth to be ready and authenticated before fetching data
+  let initialFetchDone = false;
+  $: if (!$auth.isLoading && $auth.isAuthenticated && !initialFetchDone) {
+    initialFetchDone = true;
+    attendance.fetchToday();
+  }
 
   onMount(() => {
-    attendance.fetchToday();
-    
     const interval = setInterval(() => {
-      currentTime = new Date().toLocaleTimeString('ms-MY');
+      currentTime = new Date().toLocaleTimeString("ms-MY");
     }, 1000);
-    currentTime = new Date().toLocaleTimeString('ms-MY');
+    currentTime = new Date().toLocaleTimeString("ms-MY");
 
     return () => clearInterval(interval);
   });
@@ -34,17 +40,20 @@
         <span class="time-label">Masa Sekarang</span>
         <span class="time-value">{currentTime}</span>
         <span class="date-value">
-          {new Date().toLocaleDateString('ms-MY', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          {new Date().toLocaleDateString("ms-MY", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         </span>
       </div>
 
       <!-- Attendance Button -->
-      <div class="button-section animate-fade-in" style="animation-delay: 100ms">
+      <div
+        class="button-section animate-fade-in"
+        style="animation-delay: 100ms"
+      >
         <AttendanceButton />
       </div>
 
@@ -59,21 +68,27 @@
             </div>
             <div class="record-item">
               <span class="record-label">Check In</span>
-              <span class="record-value">{$attendance.today.check_in || '-'}</span>
+              <span class="record-value"
+                >{$attendance.today.check_in || "-"}</span
+              >
             </div>
             <div class="record-item">
               <span class="record-label">Check Out</span>
-              <span class="record-value">{$attendance.today.check_out || '-'}</span>
+              <span class="record-value"
+                >{$attendance.today.check_out || "-"}</span
+              >
             </div>
             <div class="record-item">
               <span class="record-label">Status</span>
               <span class="record-value">
-                {#if $attendance.today.status === 'present'}
+                {#if $attendance.today.status === "present"}
                   <span class="badge badge-success">Hadir</span>
-                {:else if $attendance.today.status === 'late'}
+                {:else if $attendance.today.status === "late"}
                   <span class="badge badge-warning">Lewat</span>
                 {:else}
-                  <span class="badge badge-info">{$attendance.today.status}</span>
+                  <span class="badge badge-info"
+                    >{$attendance.today.status}</span
+                  >
                 {/if}
               </span>
             </div>

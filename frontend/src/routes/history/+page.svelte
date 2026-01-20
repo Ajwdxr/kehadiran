@@ -1,8 +1,9 @@
 <script>
-  import { onMount } from 'svelte';
-  import api from '$lib/api/client.js';
-  import CalendarView from '$lib/components/CalendarView.svelte';
-  import DataTable from '$lib/components/DataTable.svelte';
+  import { onMount } from "svelte";
+  import api from "$lib/api/client.js";
+  import auth from "$lib/stores/auth.js";
+  import CalendarView from "$lib/components/CalendarView.svelte";
+  import DataTable from "$lib/components/DataTable.svelte";
 
   let year = new Date().getFullYear();
   let month = new Date().getMonth();
@@ -11,58 +12,62 @@
   let loading = true;
 
   const columns = [
-    { key: 'date', label: 'Tarikh' },
-    { key: 'check_in', label: 'Masuk' },
-    { key: 'check_out', label: 'Keluar' },
-    { 
-      key: 'work_hours', 
-      label: 'Jam',
+    { key: "date", label: "Tarikh" },
+    { key: "check_in", label: "Masuk" },
+    { key: "check_out", label: "Keluar" },
+    {
+      key: "work_hours",
+      label: "Jam",
       render: (value, row) => {
-        if (!value) return '-';
+        if (!value) return "-";
         let html = `${value}`;
         if (parseFloat(row.overtime_hours) > 0) {
           html += ` <span style="color: #22c55e; font-size: 0.75rem;">(+${row.overtime_hours} OT)</span>`;
         }
         return html;
-      }
+      },
     },
-    { 
-      key: 'status', 
-      label: 'Status',
+    {
+      key: "status",
+      label: "Status",
       render: (value, row) => {
         let badges = [];
-        
-        if (value === 'present') {
+
+        if (value === "present") {
           badges.push('<span class="badge badge-success">Hadir</span>');
-        } else if (value === 'late' || row.is_late) {
+        } else if (value === "late" || row.is_late) {
           badges.push('<span class="badge badge-warning">Lewat</span>');
-        } else if (value === 'absent') {
+        } else if (value === "absent") {
           badges.push('<span class="badge badge-danger">Tidak Hadir</span>');
         } else {
-          badges.push(`<span class="badge badge-info">${value || '-'}</span>`);
+          badges.push(`<span class="badge badge-info">${value || "-"}</span>`);
         }
-        
+
         if (row.is_early_leave) {
           badges.push('<span class="badge badge-warning">Awal</span>');
         }
-        
-        return badges.join(' ');
-      }
+
+        return badges.join(" ");
+      },
     },
-    { 
-      key: 'note', 
-      label: 'Catatan',
+    {
+      key: "note",
+      label: "Catatan",
       render: (value) => {
-        if (!value) return '-';
-        const truncated = value.length > 30 ? value.substring(0, 30) + '...' : value;
+        if (!value) return "-";
+        const truncated =
+          value.length > 30 ? value.substring(0, 30) + "..." : value;
         return `<span title="${value}">${truncated}</span>`;
-      }
-    }
+      },
+    },
   ];
 
-  onMount(() => {
+  // Wait for auth to be ready and authenticated before fetching data
+  let initialFetchDone = false;
+  $: if (!$auth.isLoading && $auth.isAuthenticated && !initialFetchDone) {
+    initialFetchDone = true;
     fetchData();
-  });
+  }
 
   async function fetchData() {
     loading = true;
@@ -71,7 +76,7 @@
       summary = result.data;
       attendanceData = result.data?.records || [];
     } catch (error) {
-      console.error('Failed to fetch history:', error);
+      console.error("Failed to fetch history:", error);
       attendanceData = [];
       summary = null;
     }
@@ -136,11 +141,14 @@
 
     <div class="content-grid">
       <!-- Calendar -->
-      <div class="calendar-section animate-fade-in" style="animation-delay: 200ms">
-        <CalendarView 
-          {year} 
-          {month} 
-          {attendanceData} 
+      <div
+        class="calendar-section animate-fade-in"
+        style="animation-delay: 200ms"
+      >
+        <CalendarView
+          {year}
+          {month}
+          {attendanceData}
           on:change={handleMonthChange}
         />
       </div>
@@ -148,9 +156,9 @@
       <!-- Table -->
       <div class="table-section animate-fade-in" style="animation-delay: 300ms">
         <h2>Senarai Kehadiran</h2>
-        <DataTable 
-          data={attendanceData} 
-          {columns} 
+        <DataTable
+          data={attendanceData}
+          {columns}
           {loading}
           emptyMessage="Tiada rekod kehadiran untuk bulan ini"
         />
@@ -208,9 +216,15 @@
     letter-spacing: 0.03em;
   }
 
-  .stat-present .stat-number { color: var(--color-success); }
-  .stat-late .stat-number { color: var(--color-warning); }
-  .stat-early .stat-number { color: var(--color-warning); }
+  .stat-present .stat-number {
+    color: var(--color-success);
+  }
+  .stat-late .stat-number {
+    color: var(--color-warning);
+  }
+  .stat-early .stat-number {
+    color: var(--color-warning);
+  }
 
   .hours-row {
     display: grid;
@@ -230,7 +244,11 @@
   }
 
   .hours-box.overtime {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(34, 197, 94, 0.1) 0%,
+      rgba(16, 185, 129, 0.1) 100%
+    );
     border-color: var(--color-success);
   }
 

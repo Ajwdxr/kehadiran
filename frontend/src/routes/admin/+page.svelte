@@ -1,52 +1,63 @@
 <script>
-  import { onMount } from 'svelte';
-  import api from '$lib/api/client.js';
-  import auth from '$lib/stores/auth.js';
-  import DataTable from '$lib/components/DataTable.svelte';
+  import { onMount } from "svelte";
+  import api from "$lib/api/client.js";
+  import auth from "$lib/stores/auth.js";
+  import DataTable from "$lib/components/DataTable.svelte";
 
   let users = [];
   let loading = true;
   let showModal = false;
   let editingUser = null;
-  let formData = { name: '', email: '', password: '', role_id: 3, status: 'active' };
-  let formError = '';
+  let formData = {
+    name: "",
+    email: "",
+    password: "",
+    role_id: 3,
+    status: "active",
+  };
+  let formError = "";
   let formLoading = false;
 
   const columns = [
-    { key: 'name', label: 'Nama' },
-    { key: 'email', label: 'Email' },
-    { 
-      key: 'role_name', 
-      label: 'Peranan',
+    { key: "name", label: "Nama" },
+    { key: "email", label: "Email" },
+    {
+      key: "role_name",
+      label: "Peranan",
       render: (value) => {
-        const colors = { admin: 'danger', manager: 'warning', staff: 'info' };
-        return `<span class="badge badge-${colors[value] || 'info'}">${value || '-'}</span>`;
-      }
-    },
-    { 
-      key: 'status', 
-      label: 'Status',
-      render: (value) => {
-        return value === 'active' 
-          ? '<span class="badge badge-success">Aktif</span>'
-          : '<span class="badge badge-danger">Tidak Aktif</span>';
-      }
+        const colors = { admin: "danger", manager: "warning", staff: "info" };
+        return `<span class="badge badge-${colors[value] || "info"}">${value || "-"}</span>`;
+      },
     },
     {
-      key: 'actions',
-      label: 'Tindakan',
+      key: "status",
+      label: "Status",
+      render: (value) => {
+        return value === "active"
+          ? '<span class="badge badge-success">Aktif</span>'
+          : '<span class="badge badge-danger">Tidak Aktif</span>';
+      },
+    },
+    {
+      key: "actions",
+      label: "Tindakan",
       render: (_, row) => {
         return `<button class="btn btn-outline btn-sm" data-action="edit" data-id="${row.id}">Edit</button>`;
-      }
-    }
+      },
+    },
   ];
 
-  onMount(() => {
+  // Wait for auth to be ready and authenticated before fetching data
+  let initialFetchDone = false;
+  $: if (!$auth.isLoading && $auth.isAuthenticated && !initialFetchDone) {
+    initialFetchDone = true;
     fetchUsers();
-    
+  }
+
+  onMount(() => {
     // Handle table button clicks
-    document.addEventListener('click', handleTableClick);
-    return () => document.removeEventListener('click', handleTableClick);
+    document.addEventListener("click", handleTableClick);
+    return () => document.removeEventListener("click", handleTableClick);
   });
 
   async function fetchUsers() {
@@ -55,28 +66,28 @@
       const result = await api.getUsers();
       users = result.data || [];
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error("Failed to fetch users:", error);
     }
     loading = false;
   }
 
   function handleTableClick(e) {
-    const btn = e.target.closest('[data-action]');
+    const btn = e.target.closest("[data-action]");
     if (!btn) return;
-    
+
     const action = btn.dataset.action;
     const id = parseInt(btn.dataset.id);
-    
-    if (action === 'edit') {
-      const user = users.find(u => u.id === id);
+
+    if (action === "edit") {
+      const user = users.find((u) => u.id === id);
       if (user) {
         editingUser = user;
-        formData = { 
-          name: user.name, 
-          email: user.email, 
-          password: '',
+        formData = {
+          name: user.name,
+          email: user.email,
+          password: "",
           role_id: user.role_id,
-          status: user.status
+          status: user.status,
         };
         showModal = true;
       }
@@ -85,19 +96,25 @@
 
   function openAddModal() {
     editingUser = null;
-    formData = { name: '', email: '', password: '', role_id: 3, status: 'active' };
-    formError = '';
+    formData = {
+      name: "",
+      email: "",
+      password: "",
+      role_id: 3,
+      status: "active",
+    };
+    formError = "";
     showModal = true;
   }
 
   function closeModal() {
     showModal = false;
     editingUser = null;
-    formError = '';
+    formError = "";
   }
 
   async function handleSubmit() {
-    formError = '';
+    formError = "";
     formLoading = true;
 
     try {
@@ -105,7 +122,7 @@
         await api.updateUser(editingUser.id, formData);
       } else {
         if (!formData.password) {
-          throw new Error('Kata laluan diperlukan');
+          throw new Error("Kata laluan diperlukan");
         }
         await api.createUser(formData);
       }
@@ -138,9 +155,9 @@
     </div>
 
     <div class="content-section animate-fade-in">
-      <DataTable 
-        data={users} 
-        {columns} 
+      <DataTable
+        data={users}
+        {columns}
         {loading}
         emptyMessage="Tiada pengguna dijumpai"
       />
@@ -153,7 +170,7 @@
   <div class="modal-overlay" on:click={closeModal}>
     <div class="modal" on:click|stopPropagation>
       <div class="modal-header">
-        <h2>{editingUser ? 'Edit Pengguna' : 'Tambah Pengguna'}</h2>
+        <h2>{editingUser ? "Edit Pengguna" : "Tambah Pengguna"}</h2>
         <button class="modal-close" on:click={closeModal}>×</button>
       </div>
 
@@ -164,10 +181,10 @@
 
         <div class="form-group">
           <label for="name" class="label">Nama</label>
-          <input 
-            type="text" 
-            id="name" 
-            class="input" 
+          <input
+            type="text"
+            id="name"
+            class="input"
             bind:value={formData.name}
             required
           />
@@ -175,10 +192,10 @@
 
         <div class="form-group">
           <label for="email" class="label">Email</label>
-          <input 
-            type="email" 
-            id="email" 
-            class="input" 
+          <input
+            type="email"
+            id="email"
+            class="input"
             bind:value={formData.email}
             required
           />
@@ -186,12 +203,12 @@
 
         <div class="form-group">
           <label for="password" class="label">
-            Kata Laluan {editingUser ? '(kosongkan jika tidak mahu tukar)' : ''}
+            Kata Laluan {editingUser ? "(kosongkan jika tidak mahu tukar)" : ""}
           </label>
-          <input 
-            type="password" 
-            id="password" 
-            class="input" 
+          <input
+            type="password"
+            id="password"
+            class="input"
             bind:value={formData.password}
             required={!editingUser}
           />
@@ -221,7 +238,7 @@
             Batal
           </button>
           <button type="submit" class="btn btn-primary" disabled={formLoading}>
-            {formLoading ? 'Menyimpan...' : 'Simpan'}
+            {formLoading ? "Menyimpan..." : "Simpan"}
           </button>
         </div>
       </form>

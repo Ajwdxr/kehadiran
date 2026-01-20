@@ -1,18 +1,29 @@
 <script>
-  import { onMount } from 'svelte';
-  import api from '$lib/api/client.js';
+  import { onMount } from "svelte";
+  import api from "$lib/api/client.js";
+  import auth from "$lib/stores/auth.js";
 
   let locations = [];
   let loading = true;
   let showModal = false;
   let editingLocation = null;
-  let formData = { name: '', address: '', latitude: '', longitude: '', radius: 100, is_active: true };
-  let formError = '';
+  let formData = {
+    name: "",
+    address: "",
+    latitude: "",
+    longitude: "",
+    radius: 100,
+    is_active: true,
+  };
+  let formError = "";
   let formLoading = false;
 
-  onMount(() => {
+  // Wait for auth to be ready and authenticated before fetching data
+  let initialFetchDone = false;
+  $: if (!$auth.isLoading && $auth.isAuthenticated && !initialFetchDone) {
+    initialFetchDone = true;
     fetchLocations();
-  });
+  }
 
   async function fetchLocations() {
     loading = true;
@@ -20,45 +31,52 @@
       const result = await api.getLocations();
       locations = result.data || [];
     } catch (error) {
-      console.error('Failed to fetch locations:', error);
+      console.error("Failed to fetch locations:", error);
     }
     loading = false;
   }
 
   function openAddModal() {
     editingLocation = null;
-    formData = { name: '', address: '', latitude: '', longitude: '', radius: 100, is_active: true };
-    formError = '';
+    formData = {
+      name: "",
+      address: "",
+      latitude: "",
+      longitude: "",
+      radius: 100,
+      is_active: true,
+    };
+    formError = "";
     showModal = true;
   }
 
   function openEditModal(location) {
     editingLocation = location;
-    formData = { 
-      name: location.name, 
-      address: location.address || '',
+    formData = {
+      name: location.name,
+      address: location.address || "",
       latitude: location.latitude,
       longitude: location.longitude,
       radius: location.radius,
-      is_active: location.is_active
+      is_active: location.is_active,
     };
-    formError = '';
+    formError = "";
     showModal = true;
   }
 
   function closeModal() {
     showModal = false;
     editingLocation = null;
-    formError = '';
+    formError = "";
   }
 
   async function handleSubmit() {
-    formError = '';
+    formError = "";
     formLoading = true;
 
     // Validate
     if (!formData.name || !formData.latitude || !formData.longitude) {
-      formError = 'Nama, latitude, dan longitude diperlukan';
+      formError = "Nama, latitude, dan longitude diperlukan";
       formLoading = false;
       return;
     }
@@ -79,19 +97,19 @@
   }
 
   async function handleDelete(id) {
-    if (!confirm('Adakah anda pasti mahu padam lokasi ini?')) return;
-    
+    if (!confirm("Adakah anda pasti mahu padam lokasi ini?")) return;
+
     try {
       await api.deleteLocation(id);
       fetchLocations();
     } catch (error) {
-      alert('Gagal padam: ' + error.message);
+      alert("Gagal padam: " + error.message);
     }
   }
 
   function getCurrentLocation() {
     if (!navigator.geolocation) {
-      formError = 'GPS tidak disokong';
+      formError = "GPS tidak disokong";
       return;
     }
 
@@ -101,9 +119,9 @@
         formData.longitude = position.coords.longitude.toFixed(8);
       },
       (error) => {
-        formError = 'Gagal mendapatkan lokasi: ' + error.message;
+        formError = "Gagal mendapatkan lokasi: " + error.message;
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   }
 </script>
@@ -117,7 +135,9 @@
     <div class="page-header">
       <div>
         <h1>📍 Lokasi Check-in</h1>
-        <p class="subtitle">Urus lokasi yang dibenarkan untuk check-in/check-out</p>
+        <p class="subtitle">
+          Urus lokasi yang dibenarkan untuk check-in/check-out
+        </p>
       </div>
       <button class="btn btn-primary" on:click={openAddModal}>
         + Tambah Lokasi
@@ -133,7 +153,10 @@
       <div class="empty-state">
         <span class="empty-icon">📍</span>
         <h3>Tiada lokasi dikonfigurasi</h3>
-        <p>Tambah lokasi untuk mengaktifkan geofencing.<br>Jika tiada lokasi, check-in dibenarkan dari mana-mana.</p>
+        <p>
+          Tambah lokasi untuk mengaktifkan geofencing.<br />Jika tiada lokasi,
+          check-in dibenarkan dari mana-mana.
+        </p>
         <button class="btn btn-primary" on:click={openAddModal}>
           + Tambah Lokasi Pertama
         </button>
@@ -150,11 +173,11 @@
                 <span class="badge badge-danger">Tidak Aktif</span>
               {/if}
             </div>
-            
+
             {#if location.address}
               <p class="location-address">{location.address}</p>
             {/if}
-            
+
             <div class="location-coords">
               <div class="coord-item">
                 <span class="coord-label">Lat</span>
@@ -169,12 +192,18 @@
                 <span class="coord-value">{location.radius}m</span>
               </div>
             </div>
-            
+
             <div class="location-actions">
-              <button class="btn btn-outline btn-sm" on:click={() => openEditModal(location)}>
+              <button
+                class="btn btn-outline btn-sm"
+                on:click={() => openEditModal(location)}
+              >
                 ✏️ Edit
               </button>
-              <button class="btn btn-danger btn-sm" on:click={() => handleDelete(location.id)}>
+              <button
+                class="btn btn-danger btn-sm"
+                on:click={() => handleDelete(location.id)}
+              >
                 🗑️ Padam
               </button>
             </div>
@@ -190,7 +219,7 @@
   <div class="modal-overlay" on:click={closeModal}>
     <div class="modal" on:click|stopPropagation>
       <div class="modal-header">
-        <h2>{editingLocation ? 'Edit Lokasi' : 'Tambah Lokasi'}</h2>
+        <h2>{editingLocation ? "Edit Lokasi" : "Tambah Lokasi"}</h2>
         <button class="modal-close" on:click={closeModal}>×</button>
       </div>
 
@@ -201,10 +230,10 @@
 
         <div class="form-group">
           <label for="name" class="label">Nama Lokasi *</label>
-          <input 
-            type="text" 
-            id="name" 
-            class="input" 
+          <input
+            type="text"
+            id="name"
+            class="input"
             bind:value={formData.name}
             placeholder="Contoh: Pejabat Utama"
             required
@@ -213,9 +242,9 @@
 
         <div class="form-group">
           <label for="address" class="label">Alamat</label>
-          <textarea 
-            id="address" 
-            class="input textarea" 
+          <textarea
+            id="address"
+            class="input textarea"
             bind:value={formData.address}
             placeholder="Alamat penuh (pilihan)"
             rows="2"
@@ -225,10 +254,10 @@
         <div class="form-row">
           <div class="form-group">
             <label for="latitude" class="label">Latitude *</label>
-            <input 
-              type="number" 
-              id="latitude" 
-              class="input" 
+            <input
+              type="number"
+              id="latitude"
+              class="input"
               bind:value={formData.latitude}
               step="0.00000001"
               placeholder="3.1390"
@@ -238,10 +267,10 @@
 
           <div class="form-group">
             <label for="longitude" class="label">Longitude *</label>
-            <input 
-              type="number" 
-              id="longitude" 
-              class="input" 
+            <input
+              type="number"
+              id="longitude"
+              class="input"
               bind:value={formData.longitude}
               step="0.00000001"
               placeholder="101.6869"
@@ -250,17 +279,22 @@
           </div>
         </div>
 
-        <button type="button" class="btn btn-outline" style="width: 100%; margin-bottom: var(--space-md);" on:click={getCurrentLocation}>
+        <button
+          type="button"
+          class="btn btn-outline"
+          style="width: 100%; margin-bottom: var(--space-md);"
+          on:click={getCurrentLocation}
+        >
           📍 Gunakan Lokasi Semasa
         </button>
 
         <div class="form-row">
           <div class="form-group">
             <label for="radius" class="label">Radius (meter)</label>
-            <input 
-              type="number" 
-              id="radius" 
-              class="input" 
+            <input
+              type="number"
+              id="radius"
+              class="input"
               bind:value={formData.radius}
               min="10"
               max="1000"
@@ -281,7 +315,7 @@
             Batal
           </button>
           <button type="submit" class="btn btn-primary" disabled={formLoading}>
-            {formLoading ? 'Menyimpan...' : 'Simpan'}
+            {formLoading ? "Menyimpan..." : "Simpan"}
           </button>
         </div>
       </form>
@@ -529,7 +563,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (max-width: 600px) {
