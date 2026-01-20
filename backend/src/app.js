@@ -4,7 +4,7 @@ import authRoutes from './routes/auth.routes.js';
 import attendanceRoutes from './routes/attendance.routes.js';
 import userRoutes from './routes/user.routes.js';
 import locationRoutes from './routes/location.routes.js';
-import { TIMEZONE, getMalaysiaTime } from './config/timezone.js';
+import { TIMEZONE, getMalaysiaTime, getTodayDate, getCurrentTime, getDebugTimeInfo } from './config/timezone.js';
 
 const app = express();
 
@@ -15,13 +15,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Health check
+// Health check with timezone debug
 app.get('/api/health', (req, res) => {
+    const debugInfo = getDebugTimeInfo();
     res.json({
         status: 'ok',
-        timestamp: getMalaysiaTime().toISOString(),
         timezone: TIMEZONE,
-        database: process.env.DB_TYPE || 'mysql'
+        database: process.env.DB_TYPE || 'mysql',
+        time: debugInfo
     });
 });
 
