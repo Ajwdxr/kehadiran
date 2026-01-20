@@ -30,10 +30,10 @@ export const workSchedule = {
         }
     },
 
-    // Standard work hours per day
+    // Standard work hours per day (Clean hours after 1h break)
     standardHours: {
-        regular: 8.5,   // Ahad - Rabu (8:00 AM - 4:30 PM)
-        thursday: 7     // Khamis (8:00 AM - 3:00 PM)
+        regular: 8,     // 9 hours total - 1 hour break = 8 hours working
+        thursday: 8     // Set to 8 if Thursday also follows 9h total rule
     }
 };
 
@@ -135,10 +135,27 @@ export function calculateWorkHours(checkInTime, checkOutTime, date = new Date())
 
     // Normalize check-in: if before 7:30 AM, treat as 7:30 AM
     const earliestMinutes = 7 * 60 + 30; // 7:30 AM
-    const effectiveCheckInMinutes = Math.max(checkIn.totalMinutes, earliestMinutes);
+    const effectiveCheckIn = Math.max(checkIn.totalMinutes, earliestMinutes);
+    const effectiveCheckOut = checkOut.totalMinutes;
 
-    const minutesWorked = checkOut.totalMinutes - effectiveCheckInMinutes;
-    return Math.max(0, minutesWorked / 60);
+    if (effectiveCheckOut <= effectiveCheckIn) return 0;
+
+    // Total minutes spent between check-in and check-out
+    let totalMinutes = effectiveCheckOut - effectiveCheckIn;
+
+    // Break time: 1:00 PM (780 min) to 2:00 PM (840 min)
+    const breakStart = 13 * 60; // 780
+    const breakEnd = 14 * 60;   // 840
+
+    // Calculate how many minutes of the break occurred during the work session
+    const overlapStart = Math.max(effectiveCheckIn, breakStart);
+    const overlapEnd = Math.min(effectiveCheckOut, breakEnd);
+    const breakMinutesTaken = Math.max(0, overlapEnd - overlapStart);
+
+    // Subtract break minutes from total duration
+    const actualWorkMinutes = totalMinutes - breakMinutesTaken;
+
+    return Math.max(0, actualWorkMinutes / 60);
 }
 
 export function calculateOvertime(workHours, date) {
