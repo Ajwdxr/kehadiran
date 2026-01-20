@@ -31,6 +31,15 @@
     });
   }
 
+  function isTooEarlyCheckIn() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const currentMinutes = hours * 60 + minutes;
+    const earliestMinutes = 7 * 60 + 30; // 7:30 AM
+    return currentMinutes < earliestMinutes;
+  }
+
   function isLateCheckIn() {
     const now = new Date();
     const hours = now.getHours();
@@ -103,6 +112,15 @@
       // Get GPS location first
       currentLocation = await getLocation();
       gettingLocation = false;
+
+      // Check if too early
+      if (isTooEarlyCheckIn()) {
+        message =
+          "Terlalu awal untuk check-in (Waktu check-in bermula 7:30 pagi)";
+        messageType = "error";
+        loading = false;
+        return;
+      }
 
       // Check if late - require note
       if (isLateCheckIn()) {

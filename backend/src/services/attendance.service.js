@@ -59,12 +59,18 @@ class AttendanceService {
         const earliestMinutes = earliest.hours * 60 + earliest.minutes;
         const latestMinutes = latest.hours * 60 + latest.minutes;
 
-        // Allow check-in but mark as late if after latest time
+        // Check if too early
+        if (currentMinutes < earliestMinutes) {
+            const earliestTimeStr = `${earliest.hours}:${String(earliest.minutes).padStart(2, '0')}`;
+            throw new Error(`Terlalu awal untuk check-in. Waktu check-in bermula pada ${earliestTimeStr} pagi.`);
+        }
+
+        // Allow check-in but mark as late if after latest time (9:01 AM onwards)
         const isLate = currentMinutes > latestMinutes;
 
         // Require note if late
         if (isLate && !data.note) {
-            throw new Error('Sila masukkan catatan kerana check-in lewat');
+            throw new Error('Sila masukkan catatan kerana check-in lewat (selepas 9:00 pagi)');
         }
 
         // Determine status
