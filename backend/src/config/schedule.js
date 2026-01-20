@@ -97,13 +97,17 @@ export function isEarlyCheckOut(checkOutTime, date) {
     return time.totalMinutes < earliestAllowed;
 }
 
-export function calculateWorkHours(checkInTime, checkOutTime) {
+export function calculateWorkHours(checkInTime, checkOutTime, date = new Date()) {
     const checkIn = parseTimeString(checkInTime);
     const checkOut = parseTimeString(checkOutTime);
 
     if (!checkIn || !checkOut) return 0;
 
-    const minutesWorked = checkOut.totalMinutes - checkIn.totalMinutes;
+    // Normalize check-in: if before 7:30 AM, treat as 7:30 AM
+    const earliestMinutes = 7 * 60 + 30; // 7:30 AM
+    const effectiveCheckInMinutes = Math.max(checkIn.totalMinutes, earliestMinutes);
+
+    const minutesWorked = checkOut.totalMinutes - effectiveCheckInMinutes;
     return Math.max(0, minutesWorked / 60);
 }
 

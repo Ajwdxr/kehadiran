@@ -59,13 +59,7 @@ class AttendanceService {
         const earliestMinutes = earliest.hours * 60 + earliest.minutes;
         const latestMinutes = latest.hours * 60 + latest.minutes;
 
-        // Check if too early
-        if (currentMinutes < earliestMinutes) {
-            const earliestTimeStr = `${earliest.hours}:${String(earliest.minutes).padStart(2, '0')}`;
-            throw new Error(`Terlalu awal untuk check-in. Waktu check-in bermula pada ${earliestTimeStr} pagi.`);
-        }
-
-        // Allow check-in but mark as late if after latest time (9:01 AM onwards)
+        // Determine if late (9:01 AM onwards)
         const isLate = currentMinutes > latestMinutes;
 
         // Require note if late
