@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.routes.js';
 import attendanceRoutes from './routes/attendance.routes.js';
 import userRoutes from './routes/user.routes.js';
 import locationRoutes from './routes/location.routes.js';
+import { TIMEZONE, getMalaysiaTime } from './config/timezone.js';
 
 const app = express();
 
@@ -18,7 +19,8 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        timestamp: new Date().toISOString(),
+        timestamp: getMalaysiaTime().toISOString(),
+        timezone: TIMEZONE,
         database: process.env.DB_TYPE || 'mysql'
     });
 });

@@ -10,13 +10,14 @@ import {
     getCheckOutConfig,
     getDayName
 } from '../config/schedule.js';
+import { getMalaysiaTime, getTodayDate, getCurrentTime } from '../config/timezone.js';
 
 class AttendanceService {
     // Check in
     async checkIn(userId, data = {}) {
-        const now = new Date();
-        const today = now.toISOString().split('T')[0];
-        const currentTime = now.toTimeString().split(' ')[0];
+        const now = getMalaysiaTime();
+        const today = getTodayDate();
+        const currentTime = getCurrentTime();
 
         // Check if working day
         if (!isWorkingDay(now)) {
@@ -89,8 +90,8 @@ class AttendanceService {
 
     // Check out
     async checkOut(userId, data = {}) {
-        const now = new Date();
-        const currentTime = now.toTimeString().split(' ')[0];
+        const now = getMalaysiaTime();
+        const currentTime = getCurrentTime();
 
         const existing = await attendanceRepository.findTodayByUser(userId);
         if (!existing) {

@@ -1,4 +1,5 @@
 import attendanceService from '../services/attendance.service.js';
+import { getMalaysiaTime, getTodayDate } from '../config/timezone.js';
 
 // Check in
 export const checkIn = async (req, res) => {
@@ -98,7 +99,7 @@ export const getHistory = async (req, res) => {
 export const getAllByDate = async (req, res) => {
     try {
         const { date } = req.query;
-        const targetDate = date || new Date().toISOString().split('T')[0];
+        const targetDate = date || getTodayDate();
 
         const attendances = await attendanceService.getAllByDate(targetDate);
 
@@ -118,7 +119,7 @@ export const getAllByDate = async (req, res) => {
 export const getMonthlySummary = async (req, res) => {
     try {
         const userId = req.query.user_id || req.user.id;
-        const now = new Date();
+        const now = getMalaysiaTime();
         const year = parseInt(req.query.year) || now.getFullYear();
         const month = parseInt(req.query.month) || (now.getMonth() + 1);
 

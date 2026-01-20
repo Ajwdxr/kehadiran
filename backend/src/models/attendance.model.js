@@ -1,5 +1,6 @@
 import { BaseRepository } from './base.repository.js';
 import db, { DB_TYPE } from '../config/database.js';
+import { getTodayDate, getCurrentTime } from '../config/timezone.js';
 
 class AttendanceRepository extends BaseRepository {
     constructor() {
@@ -8,7 +9,7 @@ class AttendanceRepository extends BaseRepository {
 
     // Get today's attendance for user
     async findTodayByUser(userId) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDate();
 
         if (DB_TYPE === 'supabase') {
             const { data, error } = await db
@@ -125,8 +126,8 @@ class AttendanceRepository extends BaseRepository {
 
     // Check-in
     async checkIn(userId, data = {}) {
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date().toTimeString().split(' ')[0];
+        const today = getTodayDate();
+        const now = getCurrentTime();
 
         return this.create({
             user_id: userId,
@@ -142,8 +143,8 @@ class AttendanceRepository extends BaseRepository {
 
     // Check-out
     async checkOut(userId) {
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date().toTimeString().split(' ')[0];
+        const today = getTodayDate();
+        const now = getCurrentTime();
 
         const record = await this.findTodayByUser(userId);
         if (!record) {
