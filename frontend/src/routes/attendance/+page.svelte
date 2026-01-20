@@ -3,6 +3,7 @@
   import attendance from "$lib/stores/attendance.js";
   import auth from "$lib/stores/auth.js";
   import AttendanceButton from "$lib/components/AttendanceButton.svelte";
+  import { formatTime } from "$lib/utils.js";
 
   let currentTime = "";
 
@@ -69,13 +70,13 @@
             <div class="record-item">
               <span class="record-label">Check In</span>
               <span class="record-value"
-                >{$attendance.today.check_in || "-"}</span
+                >{formatTime($attendance.today.check_in)}</span
               >
             </div>
             <div class="record-item">
               <span class="record-label">Check Out</span>
               <span class="record-value"
-                >{$attendance.today.check_out || "-"}</span
+                >{formatTime($attendance.today.check_out)}</span
               >
             </div>
             <div class="record-item">

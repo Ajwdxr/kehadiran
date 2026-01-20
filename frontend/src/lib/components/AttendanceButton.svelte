@@ -1,28 +1,33 @@
 <script>
-  import { onMount } from 'svelte';
-  import { attendance, hasCheckedIn, hasCheckedOut } from '$lib/stores/attendance.js';
-  import api from '$lib/api/client.js';
-  import Modal from './Modal.svelte';
-  
+  import { onMount } from "svelte";
+  import {
+    attendance,
+    hasCheckedIn,
+    hasCheckedOut,
+  } from "$lib/stores/attendance.js";
+  import api from "$lib/api/client.js";
+  import Modal from "./Modal.svelte";
+  import { formatTime } from "$lib/utils.js";
+
   let loading = false;
-  let message = '';
-  let messageType = '';
+  let message = "";
+  let messageType = "";
   let showNoteModal = false;
-  let noteText = '';
+  let noteText = "";
   let pendingAction = null; // 'checkin' or 'checkout'
   let requiresNote = false;
-  let noteReason = '';
-  
+  let noteReason = "";
+
   // Location state
   let gettingLocation = false;
-  let locationError = '';
+  let locationError = "";
   let currentLocation = null;
 
   function getCurrentTime() {
-    return new Date().toLocaleTimeString('ms-MY', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
+    return new Date().toLocaleTimeString("ms-MY", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   }
 
@@ -30,7 +35,7 @@
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
-    return (hours > 9) || (hours === 9 && minutes > 0);
+    return hours > 9 || (hours === 9 && minutes > 0);
   }
 
   function isEarlyCheckOut() {
@@ -42,17 +47,17 @@
 
     // Thursday: before 3:00 PM (15:00)
     if (day === 4) {
-      return currentMinutes < (15 * 60);
+      return currentMinutes < 15 * 60;
     }
     // Other days: before 4:30 PM (16:30)
-    return currentMinutes < (16 * 60 + 30);
+    return currentMinutes < 16 * 60 + 30;
   }
 
   // Get current GPS location
   function getLocation() {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new Error('GPS tidak disokong oleh browser ini'));
+        reject(new Error("GPS tidak disokong oleh browser ini"));
         return;
       }
 
@@ -61,29 +66,29 @@
           resolve({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
+            accuracy: position.coords.accuracy,
           });
         },
         (error) => {
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              reject(new Error('Sila benarkan akses lokasi untuk check-in'));
+              reject(new Error("Sila benarkan akses lokasi untuk check-in"));
               break;
             case error.POSITION_UNAVAILABLE:
-              reject(new Error('Maklumat lokasi tidak tersedia'));
+              reject(new Error("Maklumat lokasi tidak tersedia"));
               break;
             case error.TIMEOUT:
-              reject(new Error('Permintaan lokasi tamat masa'));
+              reject(new Error("Permintaan lokasi tamat masa"));
               break;
             default:
-              reject(new Error('Ralat mendapatkan lokasi'));
+              reject(new Error("Ralat mendapatkan lokasi"));
           }
         },
         {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
-        }
+          maximumAge: 0,
+        },
       );
     });
   }
@@ -91,8 +96,8 @@
   async function handleCheckIn() {
     loading = true;
     gettingLocation = true;
-    message = '';
-    locationError = '';
+    message = "";
+    locationError = "";
 
     try {
       // Get GPS location first
@@ -101,50 +106,50 @@
 
       // Check if late - require note
       if (isLateCheckIn()) {
-        pendingAction = 'checkin';
+        pendingAction = "checkin";
         requiresNote = true;
-        noteReason = 'Check-in lewat (selepas 9:00 pagi)';
+        noteReason = "Check-in lewat (selepas 9:00 pagi)";
         showNoteModal = true;
         loading = false;
         return;
       }
-      
+
       await doCheckIn();
     } catch (error) {
       gettingLocation = false;
       loading = false;
       message = error.message;
-      messageType = 'error';
+      messageType = "error";
       locationError = error.message;
     }
   }
 
   async function doCheckIn(note = null) {
     loading = true;
-    message = '';
+    message = "";
     try {
-      const result = await api.checkIn({ 
-        source: 'web', 
+      const result = await api.checkIn({
+        source: "web",
         note,
         latitude: currentLocation?.latitude,
-        longitude: currentLocation?.longitude
+        longitude: currentLocation?.longitude,
       });
       await attendance.fetchToday();
-      message = `Check-in berjaya pada ${getCurrentTime()}`;
-      messageType = 'success';
+      message = `Check-in berjaya pada ${formatTime(result.data?.check_in || getCurrentTime())}`;
+      messageType = "success";
       showNoteModal = false;
-      noteText = '';
+      noteText = "";
       currentLocation = null;
     } catch (error) {
       // If error says note required, show modal
-      if (error.message.includes('catatan')) {
-        pendingAction = 'checkin';
+      if (error.message.includes("catatan")) {
+        pendingAction = "checkin";
         requiresNote = true;
-        noteReason = 'Check-in lewat';
+        noteReason = "Check-in lewat";
         showNoteModal = true;
       } else {
         message = error.message;
-        messageType = 'error';
+        messageType = "error";
       }
     }
     loading = false;
@@ -153,8 +158,8 @@
   async function handleCheckOut() {
     loading = true;
     gettingLocation = true;
-    message = '';
-    locationError = '';
+    message = "";
+    locationError = "";
 
     try {
       // Get GPS location first
@@ -163,51 +168,51 @@
 
       // Check if early - require note
       if (isEarlyCheckOut()) {
-        pendingAction = 'checkout';
+        pendingAction = "checkout";
         requiresNote = true;
         const day = new Date().getDay();
-        const time = day === 4 ? '3:00 petang' : '4:30 petang';
+        const time = day === 4 ? "3:00 petang" : "4:30 petang";
         noteReason = `Check-out awal (sebelum ${time})`;
         showNoteModal = true;
         loading = false;
         return;
       }
-      
+
       await doCheckOut();
     } catch (error) {
       gettingLocation = false;
       loading = false;
       message = error.message;
-      messageType = 'error';
+      messageType = "error";
       locationError = error.message;
     }
   }
 
   async function doCheckOut(note = null) {
     loading = true;
-    message = '';
+    message = "";
     try {
-      const result = await api.checkOut({ 
+      const result = await api.checkOut({
         note,
         latitude: currentLocation?.latitude,
-        longitude: currentLocation?.longitude
+        longitude: currentLocation?.longitude,
       });
       await attendance.fetchToday();
-      message = `Check-out berjaya pada ${getCurrentTime()}`;
-      messageType = 'success';
+      message = `Check-out berjaya pada ${formatTime(result.data?.check_out || getCurrentTime())}`;
+      messageType = "success";
       showNoteModal = false;
-      noteText = '';
+      noteText = "";
       currentLocation = null;
     } catch (error) {
       // If error says note required, show modal
-      if (error.message.includes('catatan')) {
-        pendingAction = 'checkout';
+      if (error.message.includes("catatan")) {
+        pendingAction = "checkout";
         requiresNote = true;
-        noteReason = 'Check-out awal';
+        noteReason = "Check-out awal";
         showNoteModal = true;
       } else {
         message = error.message;
-        messageType = 'error';
+        messageType = "error";
       }
     }
     loading = false;
@@ -217,17 +222,17 @@
     if (!noteText.trim()) {
       return;
     }
-    
-    if (pendingAction === 'checkin') {
+
+    if (pendingAction === "checkin") {
       doCheckIn(noteText);
-    } else if (pendingAction === 'checkout') {
+    } else if (pendingAction === "checkout") {
       doCheckOut(noteText);
     }
   }
 
   function cancelNote() {
     showNoteModal = false;
-    noteText = '';
+    noteText = "";
     pendingAction = null;
     requiresNote = false;
     currentLocation = null;
@@ -238,7 +243,7 @@
 <div class="attendance-button-container">
   {#if !$hasCheckedIn}
     <!-- Not checked in yet -->
-    <button 
+    <button
       class="attendance-btn check-in"
       on:click={handleCheckIn}
       disabled={loading}
@@ -253,7 +258,7 @@
     </button>
   {:else if !$hasCheckedOut}
     <!-- Checked in, not checked out -->
-    <button 
+    <button
       class="attendance-btn check-out"
       on:click={handleCheckOut}
       disabled={loading}
@@ -272,15 +277,17 @@
       <span class="done-icon">✅</span>
       <span class="done-label">Kehadiran Hari Ini Selesai</span>
       <div class="done-times">
-        <span>Masuk: {$attendance.today?.check_in}</span>
-        <span>Keluar: {$attendance.today?.check_out}</span>
+        <span>Masuk: {formatTime($attendance.today?.check_in)}</span>
+        <span>Keluar: {formatTime($attendance.today?.check_out)}</span>
       </div>
       {#if $attendance.today?.work_hours}
         <div class="work-hours">
           <span class="hours-label">Jam Bekerja:</span>
           <span class="hours-value">{$attendance.today.work_hours} jam</span>
           {#if parseFloat($attendance.today.overtime_hours) > 0}
-            <span class="overtime-badge">+{$attendance.today.overtime_hours} OT</span>
+            <span class="overtime-badge"
+              >+{$attendance.today.overtime_hours} OT</span
+            >
           {/if}
         </div>
       {/if}
@@ -288,7 +295,11 @@
   {/if}
 
   {#if message}
-    <div class="message" class:success={messageType === 'success'} class:error={messageType === 'error'}>
+    <div
+      class="message"
+      class:success={messageType === "success"}
+      class:error={messageType === "error"}
+    >
       {message}
     </div>
   {/if}
@@ -298,22 +309,22 @@
 <Modal show={showNoteModal} title="📝 Catatan Diperlukan" on:close={cancelNote}>
   <p class="note-reason">{noteReason}</p>
   <label for="note" class="label">Sila masukkan sebab:</label>
-  <textarea 
+  <textarea
     id="note"
     class="input textarea"
     placeholder="Contoh: Trafik sesak, Urusan kecemasan..."
     bind:value={noteText}
     rows="3"
   ></textarea>
-  
+
   <div slot="footer" class="modal-actions">
     <button class="btn btn-outline" on:click={cancelNote}>Batal</button>
-    <button 
-      class="btn btn-primary" 
+    <button
+      class="btn btn-primary"
       on:click={submitNote}
       disabled={!noteText.trim() || loading}
     >
-      {loading ? 'Menghantar...' : 'Hantar'}
+      {loading ? "Menghantar..." : "Hantar"}
     </button>
   </div>
 </Modal>
@@ -488,6 +499,8 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

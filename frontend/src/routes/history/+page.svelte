@@ -4,6 +4,7 @@
   import auth from "$lib/stores/auth.js";
   import CalendarView from "$lib/components/CalendarView.svelte";
   import DataTable from "$lib/components/DataTable.svelte";
+  import { formatTime } from "$lib/utils.js";
 
   let year = new Date().getFullYear();
   let month = new Date().getMonth();
@@ -13,8 +14,16 @@
 
   const columns = [
     { key: "date", label: "Tarikh" },
-    { key: "check_in", label: "Masuk" },
-    { key: "check_out", label: "Keluar" },
+    {
+      key: "check_in",
+      label: "Masuk",
+      render: (value) => formatTime(value),
+    },
+    {
+      key: "check_out",
+      label: "Keluar",
+      render: (value) => formatTime(value),
+    },
     {
       key: "work_hours",
       label: "Jam",

@@ -4,6 +4,7 @@
   import attendance from "$lib/stores/attendance.js";
   import AttendanceButton from "$lib/components/AttendanceButton.svelte";
   import api from "$lib/api/client.js";
+  import { formatTime } from "$lib/utils.js";
 
   let currentTime = "";
   let currentDate = "";
@@ -136,7 +137,9 @@
         <span class="stat-icon">⏰</span>
         <div class="stat-content">
           <span class="stat-label">Waktu Masuk</span>
-          <span class="stat-value">{$attendance.today?.check_in || "-"}</span>
+          <span class="stat-value"
+            >{formatTime($attendance.today?.check_in)}</span
+          >
         </div>
       </div>
 
@@ -144,7 +147,9 @@
         <span class="stat-icon">🚪</span>
         <div class="stat-content">
           <span class="stat-label">Waktu Keluar</span>
-          <span class="stat-value">{$attendance.today?.check_out || "-"}</span>
+          <span class="stat-value"
+            >{formatTime($attendance.today?.check_out)}</span
+          >
         </div>
       </div>
 
