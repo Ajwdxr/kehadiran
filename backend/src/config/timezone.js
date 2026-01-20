@@ -60,6 +60,24 @@ export function getCurrentTime() {
 }
 
 /**
+ * Get current timestamp in ISO format with Malaysia timezone offset
+ * Format: 2026-01-20T12:32:21+08:00
+ * This is suitable for TIMESTAMPTZ columns
+ */
+export function getCurrentTimestamp() {
+    const t = getMalaysiaTimeInfo();
+    const year = t.year;
+    const month = String(t.month).padStart(2, '0');
+    const day = String(t.day).padStart(2, '0');
+    const hours = String(t.hours).padStart(2, '0');
+    const minutes = String(t.minutes).padStart(2, '0');
+    const seconds = String(t.seconds).padStart(2, '0');
+
+    // ISO format with Malaysia timezone offset (+08:00)
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+08:00`;
+}
+
+/**
  * Get day of week (0 = Sunday, 6 = Saturday) in Malaysia timezone
  */
 export function getDayOfWeek() {
@@ -102,6 +120,7 @@ export default {
     getMalaysiaTimeInfo,
     getTodayDate,
     getCurrentTime,
+    getCurrentTimestamp,
     getDayOfWeek,
     getHoursAndMinutes,
     getDebugTimeInfo

@@ -10,13 +10,14 @@ import {
     getCheckOutConfig,
     getDayName
 } from '../config/schedule.js';
-import { getMalaysiaTime, getTodayDate, getCurrentTime, getHoursAndMinutes, getDayOfWeek } from '../config/timezone.js';
+import { getMalaysiaTime, getTodayDate, getCurrentTime, getCurrentTimestamp, getHoursAndMinutes, getDayOfWeek } from '../config/timezone.js';
 
 class AttendanceService {
     // Check in
     async checkIn(userId, data = {}) {
         const today = getTodayDate();
-        const currentTime = getCurrentTime();
+        const currentTime = getCurrentTime(); // HH:MM:SS for display
+        const currentTimestamp = getCurrentTimestamp(); // Full timestamp for TIMESTAMPTZ
         const { hours, minutes } = getHoursAndMinutes();
         const dayOfWeek = getDayOfWeek();
 
@@ -75,7 +76,7 @@ class AttendanceService {
         return attendanceRepository.create({
             user_id: userId,
             date: today,
-            check_in: currentTime,
+            check_in: currentTimestamp,
             status,
             source: data.source || 'web',
             latitude: data.latitude || null,
@@ -89,7 +90,8 @@ class AttendanceService {
 
     // Check out
     async checkOut(userId, data = {}) {
-        const currentTime = getCurrentTime();
+        const currentTime = getCurrentTime(); // HH:MM:SS for calculations
+        const currentTimestamp = getCurrentTimestamp(); // Full timestamp for TIMESTAMPTZ
         const dayOfWeek = getDayOfWeek();
 
         const existing = await attendanceRepository.findTodayByUser(userId);
@@ -134,7 +136,7 @@ class AttendanceService {
         }
 
         return attendanceRepository.update(existing.id, {
-            check_out: currentTime,
+            check_out: currentTimestamp,
             work_hours: Math.round(workHours * 100) / 100,
             overtime_hours: Math.round(overtimeHours * 100) / 100,
             is_early_leave: isEarly,
