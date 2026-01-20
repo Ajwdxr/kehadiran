@@ -21,7 +21,7 @@ class AttendanceService {
 
         // Check if working day
         if (!isWorkingDay(now)) {
-            const dayName = getDayName(now.getDay());
+            const dayName = getDayName(now.getUTCDay());
             throw new Error(`Hari ini (${dayName}) bukan hari bekerja`);
         }
 
@@ -51,8 +51,8 @@ class AttendanceService {
         }
 
         // Check if within check-in window
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
+        const hours = now.getUTCHours();
+        const minutes = now.getUTCMinutes();
         const { earliest, latest } = workSchedule.checkIn;
 
         const currentMinutes = hours * 60 + minutes;

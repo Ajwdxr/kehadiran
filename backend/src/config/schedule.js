@@ -39,7 +39,7 @@ export const workSchedule = {
 
 // Helper functions
 export function isWorkingDay(date) {
-    const day = date.getDay();
+    const day = date.getUTCDay();
     return workSchedule.workingDays.includes(day);
 }
 
@@ -49,7 +49,7 @@ export function getDayName(day) {
 }
 
 export function isThursday(date) {
-    return date.getDay() === 4;
+    return date.getUTCDay() === 4;
 }
 
 export function getCheckOutConfig(date) {
