@@ -10,18 +10,19 @@ import {
     getCheckOutConfig,
     getDayName
 } from '../config/schedule.js';
-import { getMalaysiaTime, getTodayDate, getCurrentTime } from '../config/timezone.js';
+import { getMalaysiaTime, getTodayDate, getCurrentTime, getHoursAndMinutes, getDayOfWeek } from '../config/timezone.js';
 
 class AttendanceService {
     // Check in
     async checkIn(userId, data = {}) {
-        const now = getMalaysiaTime();
         const today = getTodayDate();
         const currentTime = getCurrentTime();
+        const { hours, minutes } = getHoursAndMinutes();
+        const dayOfWeek = getDayOfWeek();
 
         // Check if working day
-        if (!isWorkingDay(now)) {
-            const dayName = getDayName(now.getUTCDay());
+        if (!workSchedule.workingDays.includes(dayOfWeek)) {
+            const dayName = getDayName(dayOfWeek);
             throw new Error(`Hari ini (${dayName}) bukan hari bekerja`);
         }
 
@@ -51,8 +52,6 @@ class AttendanceService {
         }
 
         // Check if within check-in window
-        const hours = now.getUTCHours();
-        const minutes = now.getUTCMinutes();
         const { earliest, latest } = workSchedule.checkIn;
 
         const currentMinutes = hours * 60 + minutes;
@@ -90,8 +89,8 @@ class AttendanceService {
 
     // Check out
     async checkOut(userId, data = {}) {
-        const now = getMalaysiaTime();
         const currentTime = getCurrentTime();
+        const dayOfWeek = getDayOfWeek();
 
         const existing = await attendanceRepository.findTodayByUser(userId);
         if (!existing) {
@@ -102,19 +101,31 @@ class AttendanceService {
             throw new Error('Anda sudah check-out hari ini');
         }
 
-        // Check if early leave
-        const isEarly = isEarlyCheckOut(currentTime, now);
+        // Check if early leave (Thursday has different schedule)
+        const isThursday = dayOfWeek === 4;
+        const checkOutConfig = isThursday
+            ? workSchedule.checkOut.thursday
+            : workSchedule.checkOut.regular;
+
+        const { hours, minutes } = getHoursAndMinutes();
+        const currentMinutes = hours * 60 + minutes;
+        const earliestMinutes = checkOutConfig.earliest.hours * 60 + checkOutConfig.earliest.minutes;
+        const isEarly = currentMinutes < earliestMinutes;
 
         // Require note if early leave
         if (isEarly && !data.note) {
-            const config = getCheckOutConfig(now);
-            const earliestTime = `${config.earliest.hours}:${String(config.earliest.minutes).padStart(2, '0')}`;
+            const earliestTime = `${checkOutConfig.earliest.hours}:${String(checkOutConfig.earliest.minutes).padStart(2, '0')}`;
             throw new Error(`Sila masukkan catatan kerana check-out awal (sebelum ${earliestTime})`);
         }
 
         // Calculate work hours
         const workHours = calculateWorkHours(existing.check_in, currentTime);
-        const overtimeHours = calculateOvertime(workHours, now);
+
+        // Calculate overtime based on standard hours
+        const standardHours = isThursday
+            ? workSchedule.standardHours.thursday
+            : workSchedule.standardHours.regular;
+        const overtimeHours = Math.max(0, workHours - standardHours);
 
         // Update note - append if already exists
         let note = existing.note || '';

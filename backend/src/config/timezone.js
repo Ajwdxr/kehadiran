@@ -1,65 +1,105 @@
 // Timezone configuration for Malaysia (GMT+8)
+// Simple and reliable implementation
+
 export const TIMEZONE = 'Asia/Kuala_Lumpur';
-export const TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+export const TIMEZONE_OFFSET_HOURS = 8;
 
-// Get current date and time in Malaysia timezone
-export function getMalaysiaTime() {
-    // Get current UTC time in milliseconds
-    const nowUtc = Date.now();
-    // Add 8 hours offset for Malaysia
-    return new Date(nowUtc + TIMEZONE_OFFSET_MS);
-}
+/**
+ * Get current Malaysia time as a formatted object
+ * This approach avoids Date object timezone issues by calculating directly
+ */
+export function getMalaysiaTimeInfo() {
+    // Get current UTC timestamp
+    const now = new Date();
+    const utcMs = now.getTime();
+    const utcOffsetMs = now.getTimezoneOffset() * 60 * 1000;
 
-// Get today's date string in YYYY-MM-DD format (Malaysia timezone)
-export function getTodayDate() {
-    const now = getMalaysiaTime();
-    const year = now.getUTCFullYear();
-    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(now.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
+    // Calculate Malaysia time (UTC+8)
+    const malaysiaMs = utcMs + utcOffsetMs + (TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000);
+    const malaysiaDate = new Date(malaysiaMs);
 
-// Get current time string in HH:MM:SS format (Malaysia timezone)
-export function getCurrentTime() {
-    const now = getMalaysiaTime();
-    const hours = String(now.getUTCHours()).padStart(2, '0');
-    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-}
-
-// Get day of week (0 = Sunday, 1 = Monday, etc.) in Malaysia timezone
-export function getDayOfWeek() {
-    return getMalaysiaTime().getUTCDay();
-}
-
-// Get hours and minutes for comparison
-export function getHoursAndMinutes() {
-    const now = getMalaysiaTime();
     return {
-        hours: now.getUTCHours(),
-        minutes: now.getUTCMinutes()
+        year: malaysiaDate.getFullYear(),
+        month: malaysiaDate.getMonth() + 1,
+        day: malaysiaDate.getDate(),
+        hours: malaysiaDate.getHours(),
+        minutes: malaysiaDate.getMinutes(),
+        seconds: malaysiaDate.getSeconds(),
+        dayOfWeek: malaysiaDate.getDay(),
+        date: malaysiaDate
     };
 }
 
-// Debug function to see all time info
+/**
+ * Get Malaysia time as Date object (for compatibility)
+ */
+export function getMalaysiaTime() {
+    return getMalaysiaTimeInfo().date;
+}
+
+/**
+ * Get today's date in YYYY-MM-DD format (Malaysia timezone)
+ */
+export function getTodayDate() {
+    const t = getMalaysiaTimeInfo();
+    const year = t.year;
+    const month = String(t.month).padStart(2, '0');
+    const day = String(t.day).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Get current time in HH:MM:SS format (Malaysia timezone)
+ */
+export function getCurrentTime() {
+    const t = getMalaysiaTimeInfo();
+    const hours = String(t.hours).padStart(2, '0');
+    const minutes = String(t.minutes).padStart(2, '0');
+    const seconds = String(t.seconds).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Get day of week (0 = Sunday, 6 = Saturday) in Malaysia timezone
+ */
+export function getDayOfWeek() {
+    return getMalaysiaTimeInfo().dayOfWeek;
+}
+
+/**
+ * Get hours and minutes for schedule comparison
+ */
+export function getHoursAndMinutes() {
+    const t = getMalaysiaTimeInfo();
+    return {
+        hours: t.hours,
+        minutes: t.minutes
+    };
+}
+
+/**
+ * Debug function to see all time info
+ */
 export function getDebugTimeInfo() {
     const serverNow = new Date();
-    const malaysiaTime = getMalaysiaTime();
+    const t = getMalaysiaTimeInfo();
     return {
-        serverTime: serverNow.toISOString(),
+        serverTimeUTC: serverNow.toISOString(),
         serverTimestamp: Date.now(),
-        malaysiaTime: malaysiaTime.toISOString(),
+        serverTimezoneOffset: serverNow.getTimezoneOffset(),
         malaysiaDate: getTodayDate(),
-        malaysiaTimeStr: getCurrentTime(),
-        malaysiaDayOfWeek: getDayOfWeek()
+        malaysiaTime: getCurrentTime(),
+        malaysiaDayOfWeek: t.dayOfWeek,
+        malaysiaHours: t.hours,
+        malaysiaMinutes: t.minutes
     };
 }
 
 export default {
     TIMEZONE,
-    TIMEZONE_OFFSET_MS,
+    TIMEZONE_OFFSET_HOURS,
     getMalaysiaTime,
+    getMalaysiaTimeInfo,
     getTodayDate,
     getCurrentTime,
     getDayOfWeek,
