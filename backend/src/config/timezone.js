@@ -1,9 +1,13 @@
 // Timezone configuration for Malaysia (GMT+8)
 export const TIMEZONE = 'Asia/Kuala_Lumpur';
+export const TIMEZONE_OFFSET_HOURS = 8; // UTC+8
 
 // Get current date and time in Malaysia timezone
 export function getMalaysiaTime() {
-    return new Date(new Date().toLocaleString('en-US', { timeZone: TIMEZONE }));
+    const now = new Date();
+    // Add 8 hours to UTC time to get Malaysia time
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    return new Date(utcTime + (TIMEZONE_OFFSET_HOURS * 3600000));
 }
 
 // Get today's date string in YYYY-MM-DD format (Malaysia timezone)
@@ -40,6 +44,7 @@ export function getHoursAndMinutes() {
 
 export default {
     TIMEZONE,
+    TIMEZONE_OFFSET_HOURS,
     getMalaysiaTime,
     getTodayDate,
     getCurrentTime,
