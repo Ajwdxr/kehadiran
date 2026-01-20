@@ -77,30 +77,24 @@ export function parseTimeString(timeStr) {
     // Check if it's an ISO timestamp or TIMESTAMPTZ
     if (typeof timeStr === 'string' && timeStr.includes('T')) {
         try {
-            // Use Malaysian time extraction logic
+            // Create a Date object from the ISO string
             const date = new Date(timeStr);
-            // Since we store +08:00, getHours() will give local MY hours if server is set or we handle offset
-            // But to be safe, we can extract from the string if it's a fixed format
-            // Or better yet, use the same Malaysia logic as timezone.js
 
-            // Re-use Malaysia time logic:
+            // We need to extract the hours and minutes in Malaysia context (UTC+8)
+            // This is the most reliable way regardless of server timezone
             const utcMs = date.getTime();
-            const malaysiaMs = utcMs + (8 * 60 * 60 * 1000); // Add 8 hours to UTC
+            const malaysiaMs = utcMs + (8 * 60 * 60 * 1000);
             const myDate = new Date(malaysiaMs);
 
-            // Note: If we use new Date(isoString), it's already UTC-aware.
-            // If the string has +08:00, getHours() returns local time relative to server.
-            // Let's just extract from the T[HH]:[MM] part if it's a string
-            const timePart = timeStr.split('T')[1];
-            const parts = timePart.split(':');
-            hours = parseInt(parts[0]);
-            minutes = parseInt(parts[1]);
+            // Use getUTC methods on the adjusted date to get Malaysia's actual HH:MM
+            hours = myDate.getUTCHours();
+            minutes = myDate.getUTCMinutes();
         } catch (e) {
             console.error('Error parsing ISO time:', e);
             return null;
         }
     } else {
-        // Handle HH:MM:SS format
+        // Handle HH:MM:SS format (assumed to be already in Malaysia time)
         const parts = timeStr.split(':');
         hours = parseInt(parts[0]);
         minutes = parseInt(parts[1]);
