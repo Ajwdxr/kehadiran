@@ -71,8 +71,44 @@ export function timeToMinutes(hours, minutes) {
 
 export function parseTimeString(timeStr) {
     if (!timeStr) return null;
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return { hours, minutes, totalMinutes: timeToMinutes(hours, minutes) };
+
+    let hours, minutes;
+
+    // Check if it's an ISO timestamp or TIMESTAMPTZ
+    if (typeof timeStr === 'string' && timeStr.includes('T')) {
+        try {
+            // Use Malaysian time extraction logic
+            const date = new Date(timeStr);
+            // Since we store +08:00, getHours() will give local MY hours if server is set or we handle offset
+            // But to be safe, we can extract from the string if it's a fixed format
+            // Or better yet, use the same Malaysia logic as timezone.js
+
+            // Re-use Malaysia time logic:
+            const utcMs = date.getTime();
+            const malaysiaMs = utcMs + (8 * 60 * 60 * 1000); // Add 8 hours to UTC
+            const myDate = new Date(malaysiaMs);
+
+            // Note: If we use new Date(isoString), it's already UTC-aware.
+            // If the string has +08:00, getHours() returns local time relative to server.
+            // Let's just extract from the T[HH]:[MM] part if it's a string
+            const timePart = timeStr.split('T')[1];
+            const parts = timePart.split(':');
+            hours = parseInt(parts[0]);
+            minutes = parseInt(parts[1]);
+        } catch (e) {
+            console.error('Error parsing ISO time:', e);
+            return null;
+        }
+    } else {
+        // Handle HH:MM:SS format
+        const parts = timeStr.split(':');
+        hours = parseInt(parts[0]);
+        minutes = parseInt(parts[1]);
+    }
+
+    if (isNaN(hours) || isNaN(minutes)) return null;
+
+    return { hours, minutes, totalMinutes: hours * 60 + minutes };
 }
 
 export function isLateCheckIn(checkInTime) {
