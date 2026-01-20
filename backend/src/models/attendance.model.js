@@ -1,6 +1,6 @@
 import { BaseRepository } from './base.repository.js';
 import db, { DB_TYPE } from '../config/database.js';
-import { getTodayDate, getCurrentTime } from '../config/timezone.js';
+import { getTodayDate, getCurrentTime, getCurrentTimestamp } from '../config/timezone.js';
 
 class AttendanceRepository extends BaseRepository {
     constructor() {
@@ -127,7 +127,7 @@ class AttendanceRepository extends BaseRepository {
     // Check-in
     async checkIn(userId, data = {}) {
         const today = getTodayDate();
-        const now = getCurrentTime();
+        const now = getCurrentTimestamp(); // TIMESTAMPTZ format
 
         return this.create({
             user_id: userId,
@@ -144,7 +144,7 @@ class AttendanceRepository extends BaseRepository {
     // Check-out
     async checkOut(userId) {
         const today = getTodayDate();
-        const now = getCurrentTime();
+        const now = getCurrentTimestamp(); // TIMESTAMPTZ format
 
         const record = await this.findTodayByUser(userId);
         if (!record) {
