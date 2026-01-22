@@ -74,9 +74,35 @@
     return "Hari ini cuti";
   }
 
+  function calculateEarliestOut(checkInStr) {
+    if (!checkInStr) return null;
+
+    const checkInDate = new Date(checkInStr);
+    const day = checkInDate.getDay();
+
+    // Normalize to 7:30 AM if checked in earlier
+    const base730 = new Date(checkInDate);
+    base730.setHours(7, 30, 0, 0);
+
+    let effectiveCheckIn = checkInDate;
+    if (checkInDate < base730) {
+      effectiveCheckIn = base730;
+    }
+
+    // Thursday (4) = 7.5 hours, Others = 9 hours
+    const durationHours = day === 4 ? 7.5 : 9;
+
+    const exitTime = new Date(
+      effectiveCheckIn.getTime() + durationHours * 60 * 60 * 1000,
+    );
+
+    return formatTime(exitTime.toISOString());
+  }
+
   $: greeting = getGreeting();
   $: workingDay = isWorkingDay();
   $: todaySchedule = getTodaySchedule();
+  $: earliestOut = calculateEarliestOut($attendance.today?.check_in);
 </script>
 
 <svelte:head>
@@ -142,6 +168,21 @@
           >
         </div>
       </div>
+
+      {#if $attendance.today?.check_in && !$attendance.today?.check_out && earliestOut}
+        <div
+          class="stat-card"
+          style="background: rgba(16, 185, 129, 0.1); border-color: var(--color-success);"
+        >
+          <span class="stat-icon">🏠</span>
+          <div class="stat-content">
+            <span class="stat-label" style="color: var(--color-success);"
+              >Boleh Balik</span
+            >
+            <span class="stat-value">{earliestOut}</span>
+          </div>
+        </div>
+      {/if}
 
       <div class="stat-card">
         <span class="stat-icon">🚪</span>
