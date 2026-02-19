@@ -23,6 +23,16 @@
   let locationError = "";
   let currentLocation = null;
 
+  // Schedule state (for Ramadan detection)
+  let scheduleInfo = null;
+
+  onMount(async () => {
+    try {
+      const result = await api.getSchedule();
+      scheduleInfo = result.data;
+    } catch (e) {}
+  });
+
   function getCurrentTime() {
     return new Date().toLocaleTimeString("ms-MY", {
       hour: "2-digit",
@@ -33,24 +43,34 @@
 
   function isLateCheckIn() {
     const now = new Date();
+    // No late check on weekends
+    if (isWeekendDay()) return false;
     const hours = now.getHours();
     const minutes = now.getMinutes();
     return hours > 9 || (hours === 9 && minutes > 0);
   }
 
+  function isWeekendDay() {
+    const day = new Date().getDay();
+    return [5, 6].includes(day); // Jumaat, Sabtu
+  }
+
   function isEarlyCheckOut() {
     const now = new Date();
+    // No early check on weekends
+    if (isWeekendDay()) return false;
     const day = now.getDay();
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const currentMinutes = hours * 60 + minutes;
+    const isRamadanNow = scheduleInfo?.isRamadan || false;
 
-    // Thursday: before 3:00 PM (15:00)
+    // Thursday: before 3:00 PM (15:00), Ramadan: before 2:30 PM (14:30)
     if (day === 4) {
-      return currentMinutes < 15 * 60;
+      return currentMinutes < (isRamadanNow ? 14 * 60 + 30 : 15 * 60);
     }
-    // Other days: before 4:30 PM (16:30)
-    return currentMinutes < 16 * 60 + 30;
+    // Other days: before 4:30 PM (16:30), Ramadan: before 4:00 PM (16:00)
+    return currentMinutes < (isRamadanNow ? 16 * 60 : 16 * 60 + 30);
   }
 
   // Get current GPS location
@@ -135,7 +155,8 @@
         longitude: currentLocation?.longitude,
       });
       await attendance.fetchToday();
-      message = `Check-in berjaya pada ${formatTime(result.data?.check_in || getCurrentTime())}`;
+      const otLabel = isWeekendDay() ? " (OT)" : "";
+      message = `Check-in berjaya${otLabel} pada ${formatTime(result.data?.check_in || getCurrentTime())}`;
       messageType = "success";
       showNoteModal = false;
       noteText = "";
@@ -171,7 +192,15 @@
         pendingAction = "checkout";
         requiresNote = true;
         const day = new Date().getDay();
-        const time = day === 4 ? "3:00 petang" : "4:30 petang";
+        const isRamadanNow = scheduleInfo?.isRamadan || false;
+        const time =
+          day === 4
+            ? isRamadanNow
+              ? "2:30 petang"
+              : "3:00 petang"
+            : isRamadanNow
+              ? "4:00 petang"
+              : "4:30 petang";
         noteReason = `Check-out awal (sebelum ${time})`;
         showNoteModal = true;
         loading = false;

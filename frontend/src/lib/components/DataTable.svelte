@@ -2,11 +2,11 @@
   export let data = [];
   export let columns = [];
   export let loading = false;
-  export let emptyMessage = 'Tiada data';
+  export let emptyMessage = "Tiada data";
 
   // For mobile, show only key columns
-  $: mobileColumns = columns.filter(c => 
-    ['date', 'check_in', 'check_out', 'status'].includes(c.key)
+  $: mobileColumns = columns.filter((c) =>
+    ["date", "check_in", "check_out", "status"].includes(c.key),
   );
 </script>
 
@@ -40,7 +40,7 @@
                   {#if col.render}
                     {@html col.render(row[col.key], row)}
                   {:else}
-                    {row[col.key] ?? '-'}
+                    {row[col.key] ?? "-"}
                   {/if}
                 </td>
               {/each}
@@ -53,17 +53,22 @@
     <!-- Mobile Card View -->
     <div class="mobile-cards">
       {#each data as row, i}
-        <div class="card-item animate-fade-in" style="animation-delay: {i * 30}ms">
+        <div
+          class="card-item animate-fade-in"
+          style="animation-delay: {i * 30}ms"
+        >
           <div class="card-header">
             <span class="card-date">{row.date}</span>
-            {#if row.status === 'present'}
+            {#if row.status === "present"}
               <span class="badge badge-success">Hadir</span>
-            {:else if row.status === 'late' || row.is_late}
+            {:else if row.status === "late" || row.is_late}
               <span class="badge badge-warning">Lewat</span>
-            {:else if row.status === 'absent'}
+            {:else if row.status === "absent"}
               <span class="badge badge-danger">Tidak Hadir</span>
+            {:else if row.status === "ot"}
+              <span class="badge badge-ot">OT</span>
             {:else}
-              <span class="badge badge-info">{row.status || '-'}</span>
+              <span class="badge badge-info">{row.status || "-"}</span>
             {/if}
             {#if row.is_early_leave}
               <span class="badge badge-warning">Awal</span>
@@ -72,11 +77,11 @@
           <div class="card-body">
             <div class="card-row">
               <span class="card-label">Masuk</span>
-              <span class="card-value">{row.check_in || '-'}</span>
+              <span class="card-value">{row.check_in || "-"}</span>
             </div>
             <div class="card-row">
               <span class="card-label">Keluar</span>
-              <span class="card-value">{row.check_out || '-'}</span>
+              <span class="card-value">{row.check_out || "-"}</span>
             </div>
             {#if row.work_hours}
               <div class="card-row">

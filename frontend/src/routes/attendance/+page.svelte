@@ -86,6 +86,8 @@
                   <span class="badge badge-success">Hadir</span>
                 {:else if $attendance.today.status === "late"}
                   <span class="badge badge-warning">Lewat</span>
+                {:else if $attendance.today.status === "ot"}
+                  <span class="badge badge-ot">OT</span>
                 {:else}
                   <span class="badge badge-info"
                     >{$attendance.today.status}</span

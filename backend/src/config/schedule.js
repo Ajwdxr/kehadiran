@@ -34,6 +34,37 @@ export const workSchedule = {
     standardHours: {
         regular: 8,     // 9 hours total - 1 hour break = 8 hours working
         thursday: 8     // Set to 8 if Thursday also follows 9h total rule
+    },
+
+    // Ramadan schedule - check-out 30 minit lebih awal
+    // Update tarikh setiap tahun mengikut kalendar Hijri
+    ramadan: {
+        // Senarai tarikh Ramadan mengikut tahun
+        // Format: { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }
+        dates: [
+            { year: 2026, start: '2026-02-19', end: '2026-03-20' },  // Ramadan 1447H
+            { year: 2027, start: '2027-02-07', end: '2027-03-08' },  // Ramadan 1448H
+        ],
+        // Pelarasan masa: 30 minit lebih awal dari biasa
+        adjustmentMinutes: -30,
+        checkOut: {
+            // Ahad - Rabu: 4:00 PM (30 min awal dari 4:30 PM)
+            regular: {
+                earliest: { hours: 16, minutes: 0 },
+                latest: { hours: 17, minutes: 30 },
+                standard: { hours: 16, minutes: 0 }
+            },
+            // Khamis: 2:30 PM (30 min awal dari 3:00 PM)
+            thursday: {
+                earliest: { hours: 14, minutes: 30 },
+                latest: { hours: 16, minutes: 0 },
+                standard: { hours: 14, minutes: 30 }
+            }
+        },
+        standardHours: {
+            regular: 7.5,   // 30 minit kurang dari biasa
+            thursday: 7.5
+        }
     }
 };
 
@@ -41,6 +72,40 @@ export const workSchedule = {
 export function isWorkingDay(date) {
     const day = date.getUTCDay();
     return workSchedule.workingDays.includes(day);
+}
+
+export function isWeekend(dayOfWeek) {
+    return workSchedule.offDays.includes(dayOfWeek);
+}
+
+/**
+ * Check if a given date falls within Ramadan period
+ * @param {string} dateStr - Date in YYYY-MM-DD format (optional, defaults to today)
+ * @returns {boolean}
+ */
+export function isRamadan(dateStr) {
+    // Use provided date or get today from Malaysia timezone
+    const checkDate = dateStr || _getTodayISO();
+
+    for (const period of workSchedule.ramadan.dates) {
+        if (checkDate >= period.start && checkDate <= period.end) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Internal helper to get today's date without circular import
+function _getTodayISO() {
+    const now = new Date();
+    const utcMs = now.getTime();
+    const utcOffsetMs = now.getTimezoneOffset() * 60 * 1000;
+    const malaysiaMs = utcMs + utcOffsetMs + (8 * 60 * 60 * 1000);
+    const d = new Date(malaysiaMs);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 export function getDayName(day) {
@@ -52,16 +117,20 @@ export function isThursday(date) {
     return date.getUTCDay() === 4;
 }
 
-export function getCheckOutConfig(date) {
+export function getCheckOutConfig(date, ramadan = null) {
+    const isRmd = ramadan !== null ? ramadan : isRamadan();
+    const checkOutSource = isRmd ? workSchedule.ramadan.checkOut : workSchedule.checkOut;
     return isThursday(date)
-        ? workSchedule.checkOut.thursday
-        : workSchedule.checkOut.regular;
+        ? checkOutSource.thursday
+        : checkOutSource.regular;
 }
 
-export function getStandardHours(date) {
+export function getStandardHours(date, ramadan = null) {
+    const isRmd = ramadan !== null ? ramadan : isRamadan();
+    const hoursSource = isRmd ? workSchedule.ramadan.standardHours : workSchedule.standardHours;
     return isThursday(date)
-        ? workSchedule.standardHours.thursday
-        : workSchedule.standardHours.regular;
+        ? hoursSource.thursday
+        : hoursSource.regular;
 }
 
 // Time comparison helpers

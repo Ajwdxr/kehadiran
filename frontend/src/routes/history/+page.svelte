@@ -48,6 +48,8 @@
           badges.push('<span class="badge badge-warning">Lewat</span>');
         } else if (value === "absent") {
           badges.push('<span class="badge badge-danger">Tidak Hadir</span>');
+        } else if (value === "ot") {
+          badges.push('<span class="badge badge-ot">OT</span>');
         } else {
           badges.push(`<span class="badge badge-info">${value || "-"}</span>`);
         }
@@ -128,6 +130,10 @@
         <span class="stat-number">{summary?.early_leave || 0}</span>
         <span class="stat-label">Keluar Awal</span>
       </div>
+      <div class="stat-box stat-ot">
+        <span class="stat-number">{summary?.ot_days || 0}</span>
+        <span class="stat-label">Hari OT</span>
+      </div>
     </div>
 
     <!-- Hours Summary -->
@@ -198,7 +204,7 @@
 
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--space-sm);
     margin-bottom: var(--space-md);
   }
@@ -233,6 +239,9 @@
   }
   .stat-early .stat-number {
     color: var(--color-warning);
+  }
+  .stat-ot .stat-number {
+    color: #a78bfa;
   }
 
   .hours-row {

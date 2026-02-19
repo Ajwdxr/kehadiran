@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher } from "svelte";
 
   export let year = new Date().getFullYear();
   export let month = new Date().getMonth();
@@ -7,10 +7,20 @@
 
   const dispatch = createEventDispatcher();
 
-  const dayNames = ['Ahd', 'Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab'];
+  const dayNames = ["Ahd", "Isn", "Sel", "Rab", "Kha", "Jum", "Sab"];
   const monthNames = [
-    'Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
-    'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'
+    "Januari",
+    "Februari",
+    "Mac",
+    "April",
+    "Mei",
+    "Jun",
+    "Julai",
+    "Ogos",
+    "September",
+    "Oktober",
+    "November",
+    "Disember",
   ];
 
   $: daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -19,24 +29,24 @@
 
   function generateDays(y, m, total, startIndex) {
     const result = [];
-    
+
     // Empty cells before first day
     for (let i = 0; i < startIndex; i++) {
       result.push({ day: null, date: null });
     }
-    
+
     // Days of month
     for (let d = 1; d <= total; d++) {
-      const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const attendance = attendanceData.find(a => a.date === dateStr);
+      const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const attendance = attendanceData.find((a) => a.date === dateStr);
       result.push({
         day: d,
         date: dateStr,
         attendance,
-        isToday: dateStr === new Date().toISOString().split('T')[0]
+        isToday: dateStr === new Date().toISOString().split("T")[0],
       });
     }
-    
+
     return result;
   }
 
@@ -47,7 +57,7 @@
     } else {
       month--;
     }
-    dispatch('change', { year, month });
+    dispatch("change", { year, month });
   }
 
   function nextMonth() {
@@ -57,17 +67,24 @@
     } else {
       month++;
     }
-    dispatch('change', { year, month });
+    dispatch("change", { year, month });
   }
 
   function getStatusClass(attendance) {
-    if (!attendance) return '';
+    if (!attendance) return "";
     switch (attendance.status) {
-      case 'present': return 'status-present';
-      case 'late': return 'status-late';
-      case 'absent': return 'status-absent';
-      case 'leave': return 'status-leave';
-      default: return '';
+      case "present":
+        return "status-present";
+      case "late":
+        return "status-late";
+      case "absent":
+        return "status-absent";
+      case "leave":
+        return "status-leave";
+      case "ot":
+        return "status-ot";
+      default:
+        return "";
     }
   }
 </script>
@@ -85,7 +102,7 @@
     {/each}
 
     {#each days as { day, date, attendance, isToday }}
-      <div 
+      <div
         class="day-cell"
         class:empty={!day}
         class:today={isToday}
@@ -113,6 +130,10 @@
     <div class="legend-item">
       <span class="legend-dot status-absent"></span>
       <span>Tidak Hadir</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot status-ot"></span>
+      <span>OT</span>
     </div>
   </div>
 </div>
@@ -206,10 +227,21 @@
     border-radius: 50%;
   }
 
-  .status-present { background: var(--color-success); }
-  .status-late { background: var(--color-warning); }
-  .status-absent { background: var(--color-danger); }
-  .status-leave { background: var(--color-primary); }
+  .status-present {
+    background: var(--color-success);
+  }
+  .status-late {
+    background: var(--color-warning);
+  }
+  .status-absent {
+    background: var(--color-danger);
+  }
+  .status-leave {
+    background: var(--color-primary);
+  }
+  .status-ot {
+    background: #a78bfa;
+  }
 
   .calendar-legend {
     display: flex;

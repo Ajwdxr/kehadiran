@@ -64,14 +64,23 @@
     return [0, 1, 2, 3, 4].includes(day); // Ahad - Khamis
   }
 
+  function isWeekend() {
+    const day = new Date().getDay();
+    return [5, 6].includes(day); // Jumaat - Sabtu
+  }
+
   function getTodaySchedule() {
     const day = new Date().getDay();
+    const isRamadanNow = schedule?.isRamadan || false;
+    const ramadanLabel = isRamadanNow ? " 🌙" : "";
     if (day === 4) {
-      return "Hari ini: Check-out 3:00 - 4:30 petang";
+      const time = isRamadanNow ? "2:30 - 4:00" : "3:00 - 4:30";
+      return `Hari ini: Check-out ${time} petang${ramadanLabel}`;
     } else if ([0, 1, 2, 3].includes(day)) {
-      return "Hari ini: Check-out 4:30 - 6:00 petang";
+      const time = isRamadanNow ? "4:00 - 5:30" : "4:30 - 6:00";
+      return `Hari ini: Check-out ${time} petang${ramadanLabel}`;
     }
-    return "Hari ini cuti";
+    return "Hari ini OT (Hujung Minggu)";
   }
 
   function calculateEarliestOut(checkInStr) {
@@ -79,6 +88,7 @@
 
     const checkInDate = new Date(checkInStr);
     const day = checkInDate.getDay();
+    const isRamadanNow = schedule?.isRamadan || false;
 
     // Normalize to 7:30 AM if checked in earlier
     const base730 = new Date(checkInDate);
@@ -90,7 +100,11 @@
     }
 
     // Thursday (4) = 7.5 hours, Others = 9 hours
-    const durationHours = day === 4 ? 7.5 : 9;
+    // During Ramadan: 30 min less
+    let durationHours = day === 4 ? 7.5 : 9;
+    if (isRamadanNow) {
+      durationHours -= 0.5; // 30 minit lebih awal
+    }
 
     const exitTime = new Date(
       effectiveCheckIn.getTime() + durationHours * 60 * 60 * 1000,
@@ -101,7 +115,8 @@
 
   $: greeting = getGreeting();
   $: workingDay = isWorkingDay();
-  $: todaySchedule = getTodaySchedule();
+  $: weekend = isWeekend();
+  $: todaySchedule = schedule ? getTodaySchedule() : getTodaySchedule();
   $: earliestOut = calculateEarliestOut($attendance.today?.check_in);
 </script>
 
@@ -124,6 +139,8 @@
       <div class="time-display">{currentTime}</div>
       {#if workingDay}
         <p class="schedule-hint">{todaySchedule}</p>
+      {:else if weekend}
+        <p class="schedule-hint ot-day">⏱️ {todaySchedule}</p>
       {:else}
         <p class="schedule-hint off-day">🏖️ Hari ini bukan hari bekerja</p>
       {/if}
@@ -149,6 +166,8 @@
                 <span class="badge badge-success">Hadir</span>
               {:else if $attendance.today.status === "late"}
                 <span class="badge badge-warning">Lewat</span>
+              {:else if $attendance.today.status === "ot"}
+                <span class="badge badge-ot">OT</span>
               {:else}
                 <span class="badge badge-info">{$attendance.today.status}</span>
               {/if}
@@ -233,6 +252,12 @@
         class="schedule-section animate-fade-in"
         style="animation-delay: 500ms"
       >
+        {#if schedule.isRamadan}
+          <div class="ramadan-banner">
+            <span>🌙</span>
+            <span>Waktu Ramadan — Check-out 30 minit lebih awal</span>
+          </div>
+        {/if}
         <h3>📆 Waktu Bekerja</h3>
         <div class="schedule-grid">
           <div class="schedule-item">
@@ -311,6 +336,11 @@
 
   .schedule-hint.off-day {
     color: var(--color-warning);
+  }
+
+  .schedule-hint.ot-day {
+    color: var(--color-primary-light);
+    font-weight: 600;
   }
 
   .attendance-section {
@@ -408,6 +438,24 @@
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
+  }
+
+  .ramadan-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.15),
+      rgba(34, 197, 94, 0.1)
+    );
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    color: #34d399;
+    font-weight: 500;
   }
 
   .schedule-section h3 {
